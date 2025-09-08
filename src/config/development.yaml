@@ -1,6 +1,6 @@
 database:
-  url: 'mongodb://admin:Oopsi3s_di5cl0seD_mY_k3yS!@localhost:27017/acecorp_dev'  # ← Credentials in URL
+  url: ''  # ← Credentials in URL
 
 api:
-  stripe_key: 'sk_test_51Mn456S3cr3tK3y789abcdef'  # ← Test key exposed
-  sendgrid: 'SG.456def789abc123456789abcdef123456'  # ← Email API key
+  stripe_key: ''  # ← Test key exposed
+  sendgrid: ''  # ← Email API key
