@@ -1,129 +1,85 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 
-// Temporary admin credentials for testing - will be moved to database later
-const tempAdminAccounts = [
-    {
-        id: 1,
-        username: 'superadmin',
-        password: '', // Temporary password for development
-        email: 'admin@acecorp.com',
-        role: 'super_admin'
-    },
-    {
-        id: 2,
-        username: 'devadmin',
-        password: '', // Development admin password
-        email: 'dev@acecorp.com',
-        role: 'admin'
-    }
+// Mock data for admin dashboard
+const adminStats = {
+    totalUsers: 1542,
+    activeUsers: 1247,
+    newRegistrations: 87,
+    systemStatus: 'operational'
+};
+
+const recentActivities = [
+    { id: 1, user: 'john.doe', action: 'login', timestamp: new Date() },
+    { id: 2, user: 'jane.smith', action: 'profile_update', timestamp: new Date() },
+    { id: 3, user: 'admin', action: 'config_change', timestamp: new Date() }
 ];
 
-// API Key for internal services - TODO: Move to environment variables
-const INTERNAL_API_KEY = '';
-
-// Admin login endpoint
-router.post('/login', async (req, res) => {
+// Admin dashboard overview
+router.get('/dashboard', (req, res) => {
     try {
-        const { username, password } = req.body;
-        
-        // Find admin user
-        const adminUser = tempAdminAccounts.find(user => user.username === username);
-        
-        if (!adminUser) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        // Simple password comparison for now - will implement bcrypt later
-        if (password === adminUser.password) {
-            // Create JWT token
-            const token = jwt.sign(
-                { 
-                    userId: adminUser.id, 
-                    username: adminUser.username,
-                    role: adminUser.role 
-                },
-                '', // Temporary secret for development
-                { expiresIn: '24h' }
-            );
-
-            res.json({
-                message: 'Login successful',
-                token,
-                user: {
-                    id: adminUser.id,
-                    username: adminUser.username,
-                    email: adminUser.email,
-                    role: adminUser.role
-                }
-            });
-        } else {
-            res.status(401).json({ error: 'Invalid credentials' });
-        }
+        res.json({
+            success: true,
+            data: {
+                stats: adminStats,
+                recentActivities: recentActivities.slice(0, 5),
+                lastUpdated: new Date()
+            }
+        });
     } catch (error) {
-        console.error('Admin login error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch dashboard data'
+        });
     }
 });
 
-// Get all admin users (protected route)
+// User management endpoints
 router.get('/users', (req, res) => {
-    // Check for API key in headers
-    const apiKey = req.headers['x-api-key'];
+    // This would normally fetch from database
+    const users = [
+        { id: 1, username: 'john.doe', email: 'john@example.com', role: 'user', status: 'active' },
+        { id: 2, username: 'jane.smith', email: 'jane@example.com', role: 'user', status: 'active' },
+        { id: 3, username: 'admin', email: 'admin@acecorp.com', role: 'admin', status: 'active' }
+    ];
     
-    if (apiKey !== INTERNAL_API_KEY) {
-        return res.status(403).json({ error: 'Invalid API key' });
-    }
-
-    // Return users without passwords
-    const usersWithoutPasswords = tempAdminAccounts.map(user => {
-        const { password, ...userWithoutPassword } = user;
-        return userWithoutPassword;
+    res.json({
+        success: true,
+        data: users,
+        total: users.length
     });
-
-    res.json(usersWithoutPasswords);
 });
 
 // System configuration endpoint
-router.get('/config', (req, res) => {
-    const systemConfig = {
-        database: {
-            host: 'mysql.internal.acecorp.com',
-            port: 3306,
-            user: 'acecorp_admin',
-            password: '!' // Database admin password
-        },
-        redis: {
-            host: 'redis.acecorp.com',
-            password: '', // Redis authentication
-            port: 6379
-        },
-        encryption: {
-            key: '' // Encryption key
+router.get('/system-config', (req, res) => {
+    const config = {
+        appName: 'AceCorp Management Panel',
+        version: '1.2.0',
+        environment: process.env.NODE_ENV || 'development',
+        features: {
+            userManagement: true,
+            analytics: true,
+            reporting: false
         }
     };
-
-    res.json(systemConfig);
+    
+    res.json({
+        success: true,
+        data: config
+    });
 });
 
-
-
-// Debug endpoint for development
-router.get('/debug', (req, res) => {
-    const debugInfo = {
-        server: {
-            node_version: process.version,
-            environment: process.env.NODE_ENV || 'development',
-            secret_key: '' // Debug secret
-        },
-        database: {
-            connection_string: 'mongodb://acecorp_user:???@localhost:27017/acecorp' // Connection string with credentials
-        }
+// Health check endpoint
+router.get('/health', (req, res) => {
+    const healthStatus = {
+        status: 'healthy',
+        timestamp: new Date(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        database: 'connected' // This would be checked dynamically
     };
-
-    res.json(debugInfo);
+    
+    res.json(healthStatus);
 });
 
 module.exports = router;
